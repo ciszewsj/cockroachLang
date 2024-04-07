@@ -1,12 +1,34 @@
 grammar Cockroach;
 
 // Parser rules
-startRule : statement+ EOF;
+startRule : statement* EOF;
 
-statement : assignment ';';
+statement : expression  ';';
 
-assignment : ID '=' INT;
+expression : assignment | print | scan;
 
+assignment : ID '=' value;
+
+value : add | substract | mul | divide | variable;
+
+add : variable ADD variable;
+substract : variable SUBSTRACT variable;
+mul : variable MUL variable;
+divide : variable DIVIDE variable;
+
+print : PRINT ID;
+scan : SCAN ID;
+
+variable : ID | INT | FLOAT | DOUBLE;
+
+SCAN : 'scan';
+PRINT : 'print';
+FLOAT : INT '.' INT 'f';
+DOUBLE : INT '.' INT;
+ADD : '+';
+SUBSTRACT : '-';
+MUL : '*';
+DIVIDE : '/';
 ID : [a-zA-Z]+;
 INT : [0-9]+;
 STRING : '"' .*? '"';

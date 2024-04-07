@@ -1,3 +1,10 @@
-abc = 10;
 cdb = 10;
-ads = 10;
+abc = cdb;
+abc = abc + 10;
+abc = abc + 22;
+abc = 22 - abc;
+print abc;
+abc = 10 * 10;
+print abc;
+abc = abc / 10;
+print abc;

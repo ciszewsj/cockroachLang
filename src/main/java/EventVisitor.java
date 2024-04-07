@@ -1,34 +1,94 @@
-import grammar.CockroachBaseVisitor;
+import grammar.CockroachBaseListener;
 import grammar.CockroachParser;
 
-public class EventVisitor extends CockroachBaseVisitor<String> {
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
+
+public class EventVisitor extends CockroachBaseListener {
+	private final Map<String, TYPE> variables = new HashMap<>();
+	private final Stack<String> stack = new Stack<>();
 
 	@Override
-	public String visitStartRule(CockroachParser.StartRuleContext ctx) {
-		StringBuilder llvmCode = new StringBuilder();
+	public void exitStartRule(CockroachParser.StartRuleContext ctx) {
+		System.out.println(LlvmGenerator.generate());
+	}
 
-		llvmCode.append("define i32 @main() {\n");
-		llvmCode.append("entry:");
-
-		for (CockroachParser.StatementContext stat : ctx.statement()) {
-			llvmCode.append(visit(stat));
+	@Override
+	public void exitAssignment(CockroachParser.AssignmentContext ctx) {
+		if (ctx.ID() != null) {
+			String id = ctx.ID().getText();
+			if (!variables.containsKey(id)) {
+				variables.put(id, TYPE.INT);
+				LlvmGenerator.declare(id);
+			}
+			LlvmGenerator.assign(id, stack.pop());
 		}
-		llvmCode.append("ret i32 0\n");
-		llvmCode.append("}");
-		return llvmCode.toString();
 	}
 
 	@Override
-	public String visitStatement(CockroachParser.StatementContext ctx) {
-		return visit(ctx.assignment());
+	public void exitVariable(CockroachParser.VariableContext ctx) {
+		if (ctx.ID() != null) {
+			String id = ctx.ID().getText();
+			if (variables.containsKey(id)) {
+				LlvmGenerator.load(id);
+				stack.push("%" + (LlvmGenerator.reg - 1));
+			} else {
+				error(ctx.getStart().getLine(), "unknown variable " + id);
+			}
+		} else if (ctx.INT() != null) {
+			stack.push(ctx.INT().getText());
+
+		}
 	}
 
 	@Override
-	public String visitAssignment(CockroachParser.AssignmentContext ctx) {
-		String variable = ctx.ID().getText();
-		int value = Integer.parseInt(ctx.INT().getText());
-		String llvmCode = "%" + variable + " = alloca i32\n"; // Deklaracja zmiennej
-		llvmCode += "store i32 " + value + ", i32* %" + variable + "\n"; // Przypisanie wartości
-		return llvmCode;
+	public void exitAdd(CockroachParser.AddContext ctx) {
+		LlvmGenerator.add(stack.pop(), stack.pop());
+		stack.push("%" + (LlvmGenerator.reg - 1));
+	}
+
+	@Override
+	public void exitSubstract(CockroachParser.SubstractContext ctx) {
+		LlvmGenerator.substract(stack.pop(), stack.pop());
+		stack.push("%" + (LlvmGenerator.reg - 1));
+	}
+
+	@Override
+	public void exitMul(CockroachParser.MulContext ctx) {
+		LlvmGenerator.mul(stack.pop(), stack.pop());
+		stack.push("%" + (LlvmGenerator.reg - 1));
+	}
+
+	@Override
+	public void exitDivide(CockroachParser.DivideContext ctx) {
+		LlvmGenerator.divide(stack.pop(), stack.pop());
+		stack.push("%" + (LlvmGenerator.reg - 1));
+	}
+
+
+	@Override
+	public void exitPrint(CockroachParser.PrintContext ctx) {
+		String id = ctx.ID().getText();
+		if (variables.containsKey(id)) {
+			LlvmGenerator.printf(id);
+		} else {
+			error(ctx.getStart().getLine(), "unknown variable " + id);
+		}
+	}
+
+	@Override
+	public void exitScan(CockroachParser.ScanContext ctx) {
+		String id = ctx.ID().getText();
+		if (!variables.containsKey(id)) {
+			variables.put(id, TYPE.INT);
+			LlvmGenerator.declare(id);
+		}
+		LlvmGenerator.scan(id);
+	}
+
+	void error(int line, String msg) {
+		System.err.println("Error, line " + line + ", " + msg);
+		System.exit(1);
 	}
 }

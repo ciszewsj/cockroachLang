@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 
 public class Main {
@@ -32,7 +33,7 @@ public class Main {
 
 	public static void main(String[] args) throws IOException {
 		f(args);
-		InputStream inputStream = null;
+		InputStream inputStream;
 		if (inputFilePath != null) {
 			inputStream = Files.newInputStream(Paths.get(inputFilePath));
 		} else {
@@ -45,8 +46,12 @@ public class Main {
 		CockroachParser parser = new CockroachParser(tokenStream);
 		EventVisitor eval = new EventVisitor();
 
+		ParseTreeWalker walker = new ParseTreeWalker();
+
+		walker.walk(new EventVisitor(), parser.startRule());
+
 		FileOutputStream fos = new FileOutputStream(outputFilePath);
-		fos.write(eval.visit(parser.startRule()).getBytes());
+		fos.write(LlvmGenerator.generate().getBytes());
 		fos.close();
 	}
 }
