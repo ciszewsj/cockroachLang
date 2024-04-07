@@ -3,50 +3,84 @@ public class LlvmGenerator {
 	private static String mainText = "";
 	static int reg = 1;
 
-	static void printf(String id) {
-		mainText += "%" + reg + " = load i32, i32* %" + id + "\n";
-		reg++;
-		mainText += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strp, i32 0, i32 0), i32 %" + (reg - 1) + ")\n";
+	static void printf(String id, TYPE type) {
+		System.out.println("CO> ? :" + type.type);
+		if (type == TYPE.FLOAT32) {
+			mainText += "%" + reg + " = load float, float* %" + id + "\n";
+			reg++;
+			mainText += "%" + reg + " = fpext float %" + (reg - 1) + " to double\n";
+			reg++;
+			mainText += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strf, i32 0, i32 0), double %" + (reg - 1) + ")\n";
+
+		} else if (type == TYPE.FLOAT64) {
+			mainText += "%" + reg + " = load double, double* %" + id + "\n";
+			reg++;
+			mainText += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strf, i32 0, i32 0), double %" + (reg - 1) + ")\n";
+		} else if (type == TYPE.LONG) {
+			mainText += "%" + reg + " = load i64, i64* %" + id + "\n";
+			reg++;
+			mainText += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @strl, i32 0, i32 0), i64 %" + (reg - 1) + ")\n";
+		} else {
+			mainText += "%" + reg + " = load i32, i32* %" + id + "\n";
+			reg++;
+			mainText += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strp, i32 0, i32 0), i32 %" + (reg - 1) + ")\n";
+		}
 		reg++;
 	}
 
-	static void scan(String id) {
+	static void scan(String id, TYPE type) {
 		mainText += "%" + reg + " = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @strs, i32 0, i32 0), i32* %" + id + ")\n";
 		reg++;
 	}
 
 
-	static void declare(String id) {
-		mainText += "%" + id + " = alloca i32\n";
+	static void declare(String id, TYPE type) {
+		mainText += "%" + id + " = alloca " + type.type + "\n";
 	}
 
-	static void assign(String id, String value) {
-		mainText += "store i32 " + value + ", i32* %" + id + "\n";
+	static void assign(String id, String value, TYPE type) {
+		mainText += "store " + type.type + " " + value + ", " + type.type + "* %" + id + "\n";
 	}
 
-	static void load(String id) {
-		mainText += "%" + reg + " = load i32, i32* %" + id + "\n";
+	static void load(String id, TYPE type) {
+		mainText += "%" + reg + " = load " + type.type + ", " + type.type + "* %" + id + "\n";
 		reg++;
 	}
 
 
-	static void add(String val1, String val2) {
-		mainText += "%" + reg + " = add i32 " + val1 + ", " + val2 + "\n";
+	static void add(String val1, String val2, TYPE type) {
+		if (type == TYPE.FLOAT32 || type == TYPE.FLOAT64) {
+			mainText += "%" + reg + " = fadd " + type.type + " " + val1 + ", " + val2 + "\n ";
+		} else {
+			mainText += "%" + reg + " = add " + type.type + " " + val1 + ", " + val2 + "\n ";
+		}
 		reg++;
 	}
 
-	static void substract(String val1, String val2) {
-		mainText += "%" + reg + " = sub i32 " + val2 + ", " + val1 + "\n";
+	static void substract(String val1, String val2, TYPE type) {
+		if (type == TYPE.FLOAT32 || type == TYPE.FLOAT64) {
+			mainText += "%" + reg + " = fsub " + type.type + " " + val2 + ", " + val1 + "\n";
+		} else {
+			mainText += "%" + reg + " = sub " + type.type + " " + val2 + ", " + val1 + "\n";
+		}
 		reg++;
 	}
 
-	static void mul(String val1, String val2) {
-		mainText += "%" + reg + " = mul i32 " + val1 + ", " + val2 + "\n";
+	static void mul(String val1, String val2, TYPE type) {
+		if (type == TYPE.FLOAT32 || type == TYPE.FLOAT64) {
+			mainText += "%" + reg + " = fmul " + type.type + " " + val1 + ", " + val2 + "\n";
+		} else {
+			mainText += "%" + reg + " = mul " + type.type + " " + val1 + ", " + val2 + "\n";
+		}
 		reg++;
 	}
 
-	static void divide(String val1, String val2) {
-		mainText += "%" + reg + " = sdiv i32 " + val2 + ", " + val1 + "\n";
+	static void divide(String val1, String val2, TYPE type) {
+		if (type == TYPE.FLOAT32 || type == TYPE.FLOAT64) {
+			mainText += "%" + reg + " = fdiv " + type.type + " " + val2 + ", " + val1 + "\n";
+		} else {
+			mainText += "%" + reg + " = sdiv " + type.type + " " + val2 + ", " + val1 + "\n";
+		}
 		reg++;
 	}
 
@@ -56,6 +90,8 @@ public class LlvmGenerator {
 		text += "declare i32 @__isoc99_scanf(i8*, ...)\n";
 		text += "@strp = constant [4 x i8] c\"%d\\0A\\00\"\n";
 		text += "@strs = constant [3 x i8] c\"%d\\00\"\n";
+		text += "@strf = constant [4 x i8] c\"%f\\0A\\00\"\n";
+		text += "@strl = constant [6 x i8] c\"%lld\\0A\\00\"\n";
 		text += headerText;
 		text += "define i32 @main() nounwind{\n";
 		text += mainText;
