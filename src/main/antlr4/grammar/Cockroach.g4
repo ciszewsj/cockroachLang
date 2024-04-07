@@ -19,10 +19,11 @@ divide : variable DIVIDE variable;
 print : PRINT ID;
 scan : SCAN ID;
 
-variable : ID | INT | FLOAT | DOUBLE;
+variable : ID | INT | FLOAT | DOUBLE | LONG;
 
 SCAN : 'scan';
 PRINT : 'print';
+LONG : INT 'l';
 FLOAT : INT '.' INT 'f';
 DOUBLE : INT '.' INT;
 ADD : '+';

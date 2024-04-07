@@ -38,6 +38,9 @@ public class EventVisitor extends CockroachBaseListener {
 			}
 		} else if (ctx.INT() != null) {
 			stack.push(ctx.INT().getText());
+		} else if (ctx.DOUBLE() != null) {
+			System.out.println("To jest double : " + ctx.DOUBLE().getText());
+			stack.push(ctx.DOUBLE().getText());
 
 		}
 	}
