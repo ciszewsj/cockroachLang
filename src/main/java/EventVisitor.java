@@ -119,6 +119,8 @@ public class EventVisitor extends CockroachBaseListener {
 		if (!variables.containsKey(id)) {
 			variables.put(id, TYPE.INT);
 			LlvmGenerator.declare(id, variables.get(id));
+		} else if (variables.get(id) != TYPE.INT) {
+			error(ctx.getStart().getLine(), "Could not change type of " + id + " dynamically");
 		}
 		LlvmGenerator.scan(id);
 	}
@@ -129,6 +131,8 @@ public class EventVisitor extends CockroachBaseListener {
 		if (!variables.containsKey(id)) {
 			variables.put(id, TYPE.FLOAT64);
 			LlvmGenerator.declare(id, variables.get(id));
+		} else if (variables.get(id) != TYPE.FLOAT64) {
+			error(ctx.getStart().getLine(), "Could not change type of " + id + " dynamically");
 		}
 		LlvmGenerator.scanDouble(id);
 	}
