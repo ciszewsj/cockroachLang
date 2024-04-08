@@ -120,9 +120,18 @@ public class EventVisitor extends CockroachBaseListener {
 			variables.put(id, TYPE.INT);
 			LlvmGenerator.declare(id, variables.get(id));
 		}
-		LlvmGenerator.scan(id, variables.get(id));
+		LlvmGenerator.scan(id);
 	}
 
+	@Override
+	public void enterScand(CockroachParser.ScandContext ctx) {
+		String id = ctx.ID().getText();
+		if (!variables.containsKey(id)) {
+			variables.put(id, TYPE.FLOAT64);
+			LlvmGenerator.declare(id, variables.get(id));
+		}
+		LlvmGenerator.scanDouble(id);
+	}
 
 	void error(int line, String msg) {
 		System.err.println("Error, line " + line + ", " + msg);

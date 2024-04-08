@@ -28,8 +28,13 @@ public class LlvmGenerator {
 		reg++;
 	}
 
-	static void scan(String id, TYPE type) {
+	static void scan(String id) {
 		mainText += "%" + reg + " = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @strs, i32 0, i32 0), i32* %" + id + ")\n";
+		reg++;
+	}
+
+	static void scanDouble(String id) {
+		mainText += "%" + reg + " = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strd, i32 0, i32 0), double* %" + id + ")\n";
 		reg++;
 	}
 
@@ -91,6 +96,7 @@ public class LlvmGenerator {
 		text += "@strp = constant [4 x i8] c\"%d\\0A\\00\"\n";
 		text += "@strs = constant [3 x i8] c\"%d\\00\"\n";
 		text += "@strf = constant [4 x i8] c\"%f\\0A\\00\"\n";
+		text += "@strd = constant [4 x i8] c\"%lf\\00\"\n";
 		text += "@strl = constant [6 x i8] c\"%lld\\0A\\00\"\n";
 		text += headerText;
 		text += "define i32 @main() nounwind{\n";

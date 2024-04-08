@@ -1,8 +1,4 @@
-d = 2147483647;
-e = 2147483623123l;
-a = 10.0f;
-c = 10.025123;
-print d;
-print a;
-print c;
-print e;
+scand g;
+print g;
+g = g + 10.0;
+print g;
