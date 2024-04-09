@@ -4,7 +4,6 @@ public class LlvmGenerator {
 	static int reg = 1;
 
 	static void printf(String id, TYPE type) {
-		System.out.println("CO> ? :" + type.type);
 		if (type == TYPE.FLOAT32) {
 			mainText += "%" + reg + " = load float, float* %" + id + "\n";
 			reg++;
