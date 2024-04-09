@@ -126,6 +126,96 @@ public class EventVisitor extends CockroachBaseListener {
 	}
 
 	@Override
+	public void exitConvert(CockroachParser.ConvertContext ctx) {
+
+		TYPE type1 = types.pop();
+		TYPE type2 = types.pop();
+		TYPE type3 = types.pop();
+
+		if (type1 != type3) {
+			error(ctx.getStart().getLine(), "Type mismatch during convert");
+		}
+
+		System.out.println(" 1 " + type1 + " 2 " + type2 + " 3 " + type3);
+		switch (type2) {
+			case INT:
+			case LONG:
+				switch (type1) {
+					case FLOAT32:
+					case FLOAT64:
+						LlvmGenerator.doubleToInt(type2, type1);
+						break;
+					case INT:
+						LlvmGenerator.intToLong(type2, type1);
+						break;
+					case LONG:
+						LlvmGenerator.longToInt(type2, type1);
+						break;
+				}
+				break;
+			case FLOAT32:
+			case FLOAT64:
+				switch (type1) {
+					case FLOAT64:
+						LlvmGenerator.doubleToFloat(type2, type1);
+						break;
+					case FLOAT32:
+						LlvmGenerator.floatToDouble(type2, type1);
+						break;
+					case INT:
+					case LONG:
+						LlvmGenerator.intToDouble(type2, type1);
+						break;
+				}
+				break;
+		}
+		stack.push("%" + (LlvmGenerator.reg - 1));
+		types.push(type2);
+	}
+
+	@Override
+	public void exitConvertSymbol(CockroachParser.ConvertSymbolContext ctx) {
+		super.exitConvertSymbol(ctx);
+		if (ctx.DTOF() != null) {
+			types.push(TYPE.FLOAT64);
+			types.push(TYPE.FLOAT32);
+		} else if (ctx.FTOD() != null) {
+			types.push(TYPE.FLOAT32);
+			types.push(TYPE.FLOAT64);
+		} else if (ctx.DTOI() != null) {
+			types.push(TYPE.FLOAT64);
+			types.push(TYPE.INT);
+		} else if (ctx.ITOD() != null) {
+			types.push(TYPE.INT);
+			types.push(TYPE.FLOAT64);
+		} else if (ctx.DTOL() != null) {
+			types.push(TYPE.FLOAT64);
+			types.push(TYPE.LONG);
+		} else if (ctx.LTOD() != null) {
+			types.push(TYPE.LONG);
+			types.push(TYPE.FLOAT64);
+		} else if (ctx.FTOI() != null) {
+			types.push(TYPE.FLOAT32);
+			types.push(TYPE.INT);
+		} else if (ctx.ITOL() != null) {
+			types.push(TYPE.INT);
+			types.push(TYPE.LONG);
+		} else if (ctx.LTOI() != null) {
+			types.push(TYPE.LONG);
+			types.push(TYPE.INT);
+		} else if (ctx.FTOL() != null) {
+			types.push(TYPE.FLOAT32);
+			types.push(TYPE.LONG);
+		} else if (ctx.LTOF() != null) {
+			types.push(TYPE.LONG);
+			types.push(TYPE.FLOAT32);
+		} else if (ctx.ITOF() != null) {
+			types.push(TYPE.INT);
+			types.push(TYPE.FLOAT32);
+		}
+	}
+
+	@Override
 	public void enterScand(CockroachParser.ScandContext ctx) {
 		String id = ctx.ID().getText();
 		if (!variables.containsKey(id)) {

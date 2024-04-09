@@ -5,11 +5,11 @@ startRule : statement* EOF;
 
 statement : expression  ';';
 
-expression : assignment | print | scan | scand;
+expression : assignment | print | scan | scand | free | convert;
 
 assignment : ID '=' value;
 
-value : add | substract | mul | divide | variable;
+value : add | substract | mul | divide | variable | convert;
 
 add : variable ADD variable;
 substract : variable SUBSTRACT variable;
@@ -19,9 +19,33 @@ divide : variable DIVIDE variable;
 print : PRINT ID;
 scan : SCAN ID;
 scand : SCAND ID;
+free : FREE ID;
+convert : convertSymbol variable;
 
 variable : ID | INT | FLOAT | DOUBLE | LONG;
 
+
+convertSymbol : ITOF | FTOI | ITOD | DTOI | ITOL | LTOI | DTOF | FTOD | DTOL | LTOD | FTOL | LTOF;
+
+ITOF : 'itof';
+FTOI : 'ftoi';
+
+ITOD : 'itod';
+DTOI : 'dtoi';
+
+ITOL : 'itol';
+LTOI : 'ltoi';
+
+DTOF : 'dtof';
+FTOD : 'ftod';
+
+DTOL : 'dtol';
+LTOD : 'ltod';
+
+FTOL : 'ftol';
+LTOF : 'ltof';
+
+FREE : 'free';
 SCAN : 'scan';
 SCAND : 'scand';
 PRINT : 'print';

@@ -33,6 +33,34 @@ public class LlvmGenerator {
 		reg++;
 	}
 
+	static void intToDouble(TYPE type1, TYPE type2) {
+		mainText += "%" + reg + " = sitofp " + type2.type + " %" + (reg - 1) + " to " + type1.type + "\n";
+		reg++;
+	}
+
+	static void intToLong(TYPE type1, TYPE type2) {
+		mainText += "%" + reg + " = sext " + type2.type + " %" + (reg - 1) + " to " + type1.type + "\n";
+		reg++;
+	}
+	static void longToInt(TYPE type1, TYPE type2) {
+		mainText += "%" + reg + " = trunc " + type2.type + " %" + (reg - 1) + " to " + type1.type + "\n";
+		reg++;
+	}
+
+	static void doubleToInt(TYPE type1, TYPE type2) {
+		mainText += "%" + reg + " = fptosi " + type2.type + " %" + (reg - 1) + " to " + type1.type + "\n";
+		reg++;
+	}
+
+	static void doubleToFloat(TYPE type1, TYPE type2) {
+		mainText += "%" + reg + " = fptrunc " + type2.type + " %" + (reg - 1) + " to " + type1.type + "\n";
+		reg++;
+	}
+	static void floatToDouble(TYPE type1, TYPE type2) {
+		mainText += "%" + reg + " = fpext " + type2.type + " %" + (reg - 1) + " to " + type1.type + "\n";
+		reg++;
+	}
+
 	static void scanDouble(String id) {
 		mainText += "%" + reg + " = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strd, i32 0, i32 0), double* %" + id + ")\n";
 		reg++;
