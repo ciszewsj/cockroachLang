@@ -20,7 +20,7 @@ print : PRINT ID;
 scan : SCAN ID;
 scand : SCAND ID;
 free : FREE ID;
-convert : convertSymbol variable;
+convert : convertSymbol ID;
 
 variable : ID | INT | FLOAT | DOUBLE | LONG;
 

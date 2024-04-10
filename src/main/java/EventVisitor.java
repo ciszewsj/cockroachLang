@@ -130,10 +130,17 @@ public class EventVisitor extends CockroachBaseListener {
 
 		TYPE type1 = types.pop();
 		TYPE type2 = types.pop();
-		TYPE type3 = types.pop();
+		TYPE type3 = null;
+		String id = ctx.ID().getText();
+		if (variables.containsKey(id)) {
+			type3 = variables.get(id);
+			LlvmGenerator.load(id, variables.get(id));
+		} else {
+			error(ctx.getStart().getLine(), "unknown variable " + id);
+		}
 
-		if (type1 != type3) {
-			error(ctx.getStart().getLine(), "Type mismatch during convert");
+		if (type2 != type3) {
+			error(ctx.getStart().getLine(), "types mismatch during convert");
 		}
 
 		System.out.println(" 1 " + type1 + " 2 " + type2 + " 3 " + type3);
@@ -143,13 +150,13 @@ public class EventVisitor extends CockroachBaseListener {
 				switch (type1) {
 					case FLOAT32:
 					case FLOAT64:
-						LlvmGenerator.doubleToInt(type2, type1);
+						LlvmGenerator.intToDouble(type1, type2);
 						break;
 					case INT:
-						LlvmGenerator.intToLong(type2, type1);
+						LlvmGenerator.longToInt(type1, type2);
 						break;
 					case LONG:
-						LlvmGenerator.longToInt(type2, type1);
+						LlvmGenerator.intToLong(type1, type2);
 						break;
 				}
 				break;
@@ -157,25 +164,24 @@ public class EventVisitor extends CockroachBaseListener {
 			case FLOAT64:
 				switch (type1) {
 					case FLOAT64:
-						LlvmGenerator.doubleToFloat(type2, type1);
+						LlvmGenerator.floatToDouble(type1, type2);
 						break;
 					case FLOAT32:
-						LlvmGenerator.floatToDouble(type2, type1);
+						LlvmGenerator.doubleToFloat(type1, type2);
 						break;
 					case INT:
 					case LONG:
-						LlvmGenerator.intToDouble(type2, type1);
+						LlvmGenerator.doubleToInt(type1, type2);
 						break;
 				}
 				break;
 		}
 		stack.push("%" + (LlvmGenerator.reg - 1));
-		types.push(type2);
+		types.push(type1);
 	}
 
 	@Override
 	public void exitConvertSymbol(CockroachParser.ConvertSymbolContext ctx) {
-		super.exitConvertSymbol(ctx);
 		if (ctx.DTOF() != null) {
 			types.push(TYPE.FLOAT64);
 			types.push(TYPE.FLOAT32);
