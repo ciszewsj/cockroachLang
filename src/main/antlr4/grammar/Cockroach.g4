@@ -5,7 +5,7 @@ startRule : statement* EOF;
 
 statement : expression  ';';
 
-expression : assignment | print | scan | scand | free | convert;
+expression : assignment | print | scan | scand | convert;
 
 assignment : ID '=' value;
 
@@ -19,7 +19,6 @@ divide : variable DIVIDE variable;
 print : PRINT ID;
 scan : SCAN ID;
 scand : SCAND ID;
-free : FREE ID;
 convert : convertSymbol ID;
 
 variable : ID | INT | FLOAT | DOUBLE | LONG;

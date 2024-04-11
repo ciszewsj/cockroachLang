@@ -1,2 +1,15 @@
-b = 10;
-a = itof b;
+scand a;
+b = dtof a;
+b = b + 10.2f;
+print b;
+
+scan c;
+print c;
+d = itol c;
+d = d * d;
+print d;
+d = d - d;
+d = 100l + d;
+d = d * d;
+d = d / d;
+print d;

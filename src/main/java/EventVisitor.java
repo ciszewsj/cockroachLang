@@ -11,11 +11,6 @@ public class EventVisitor extends CockroachBaseListener {
 	private final Stack<TYPE> types = new Stack<>();
 
 	@Override
-	public void exitStartRule(CockroachParser.StartRuleContext ctx) {
-		System.out.println(LlvmGenerator.generate());
-	}
-
-	@Override
 	public void exitAssignment(CockroachParser.AssignmentContext ctx) {
 		TYPE type = types.pop();
 		if (ctx.ID() != null) {
@@ -49,7 +44,8 @@ public class EventVisitor extends CockroachBaseListener {
 			stack.push(ctx.LONG().getText().replace("l", ""));
 			types.push(TYPE.LONG);
 		} else if (ctx.FLOAT() != null) {
-			stack.push(ctx.FLOAT().getText().replace("f", ""));
+			LlvmGenerator.doubleToFloatN(ctx.FLOAT().getText().replace("f", ""));
+			stack.push("%" + (LlvmGenerator.reg - 1));
 			types.push(TYPE.FLOAT32);
 		}
 	}
@@ -142,8 +138,6 @@ public class EventVisitor extends CockroachBaseListener {
 		if (type2 != type3) {
 			error(ctx.getStart().getLine(), "types mismatch during convert");
 		}
-
-		System.out.println(" 1 " + type1 + " 2 " + type2 + " 3 " + type3);
 		switch (type2) {
 			case INT:
 			case LONG:

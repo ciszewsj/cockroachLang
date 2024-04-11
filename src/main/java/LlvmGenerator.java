@@ -51,6 +51,11 @@ public class LlvmGenerator {
 		reg++;
 	}
 
+	static void doubleToFloatN(String value){
+		mainText += "%" + reg + " = fptrunc double " + value + " to float\n";
+		reg++;
+	}
+
 	static void doubleToFloat(TYPE type1, TYPE type2) {
 		mainText += "%" + reg + " = fptrunc " + type2.type + " %" + (reg - 1) + " to " + type1.type + "\n";
 		reg++;
