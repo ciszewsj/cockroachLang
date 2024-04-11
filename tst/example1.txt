@@ -1,6 +1,8 @@
 scand a;
 b = dtof a;
 b = b + 10.2f;
+b = 10.0f /b;
+b = b * b;
 print b;
 
 scan c;
