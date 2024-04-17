@@ -1,7 +1,11 @@
 grammar Cockroach;
 
 // Parser rules
-startRule : statement* EOF;
+startRule : programbody* EOF;
+
+programbody: repeatstatement | statement;
+
+repeatstatement : repeatheader programbody* END ';';
 
 statement : expression  ';';
 
@@ -24,6 +28,8 @@ convert : convertSymbol ID;
 variable : ID | INT | FLOAT | DOUBLE | LONG;
 
 
+repeatheader : REPEAT ID KROPKI;
+
 convertSymbol : ITOF | FTOI | ITOD | DTOI | ITOL | LTOI | DTOF | FTOD | DTOL | LTOD | FTOL | LTOF;
 
 ITOF : 'itof';
@@ -44,6 +50,9 @@ LTOD : 'ltod';
 FTOL : 'ftol';
 LTOF : 'ltof';
 
+REPEAT : 'repeat';
+
+END : 'end';
 FREE : 'free';
 SCAN : 'scan';
 SCAND : 'scand';
@@ -58,4 +67,5 @@ DIVIDE : '/';
 ID : [a-zA-Z]+;
 INT : [0-9]+;
 STRING : '"' .*? '"';
+KROPKI : ':';
 WS : [ \t\r\n]+ -> skip;

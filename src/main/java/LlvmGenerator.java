@@ -1,7 +1,12 @@
+import java.util.Stack;
+
 public class LlvmGenerator {
 	private static String headerText = "";
 	private static String mainText = "";
 	static int reg = 1;
+	static int br = 0;
+
+	static Stack<Integer> brstack = new Stack<>();
 
 	static void printf(String id, TYPE type) {
 		if (type == TYPE.FLOAT32) {
@@ -27,6 +32,34 @@ public class LlvmGenerator {
 		reg++;
 	}
 
+	static void repeatStart(String id) {
+		declare(Integer.toString(reg), TYPE.INT);
+		int counter = reg;
+		reg++;
+		assign(Integer.toString(counter), "0", TYPE.INT);
+		br++;
+		mainText += "br label %cond" + br + "\n";
+		mainText += "cond" + br + ":\n";
+
+		load(Integer.toString(counter), TYPE.INT);
+		add("%" + (reg - 1), "1", TYPE.INT);
+		assign(Integer.toString(counter), "%" + (reg - 1), TYPE.INT);
+
+		load(id, TYPE.INT);
+		mainText += "%" + reg + " = icmp sle i32 %" + (reg - 2) + ", %" + (reg - 1) + "\n";
+		reg++;
+
+		mainText += "br i1 %" + (reg - 1) + ", label %true" + br + ", label %false" + br + "\n";
+		mainText += "true" + br + ":\n";
+		brstack.push(br);
+	}
+
+	static void repeatEnd() {
+		int b = brstack.pop();
+		mainText += "br label %cond" + b + "\n";
+		mainText += "false" + b + ":\n";
+	}
+
 	static void scan(String id) {
 		mainText += "%" + reg + " = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @strs, i32 0, i32 0), i32* %" + id + ")\n";
 		reg++;
@@ -41,6 +74,7 @@ public class LlvmGenerator {
 		mainText += "%" + reg + " = sext " + type2.type + " %" + (reg - 1) + " to " + type1.type + "\n";
 		reg++;
 	}
+
 	static void longToInt(TYPE type1, TYPE type2) {
 		mainText += "%" + reg + " = trunc " + type2.type + " %" + (reg - 1) + " to " + type1.type + "\n";
 		reg++;
@@ -51,7 +85,7 @@ public class LlvmGenerator {
 		reg++;
 	}
 
-	static void doubleToFloatN(String value){
+	static void doubleToFloatN(String value) {
 		mainText += "%" + reg + " = fptrunc double " + value + " to float\n";
 		reg++;
 	}
@@ -60,6 +94,7 @@ public class LlvmGenerator {
 		mainText += "%" + reg + " = fptrunc " + type2.type + " %" + (reg - 1) + " to " + type1.type + "\n";
 		reg++;
 	}
+
 	static void floatToDouble(TYPE type1, TYPE type2) {
 		mainText += "%" + reg + " = fpext " + type2.type + " %" + (reg - 1) + " to " + type1.type + "\n";
 		reg++;

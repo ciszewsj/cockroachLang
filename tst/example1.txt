@@ -1,17 +1,7 @@
-scand a;
-b = dtof a;
-b = b + 10.2f;
-b = 10.0f /b;
-b = b * b;
-print b;
 
-scan c;
-print c;
-d = itol c;
-d = d * d;
-print d;
-d = d - d;
-d = 100l + d;
-d = d * d;
-d = d / d;
-print d;
+a=1;
+b = 2;
+repeat b:
+	a = a+1;
+end;
+print a;

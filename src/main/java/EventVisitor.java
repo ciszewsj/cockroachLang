@@ -231,4 +231,20 @@ public class EventVisitor extends CockroachBaseListener {
 		System.err.println("Error, line " + line + ", " + msg);
 		System.exit(1);
 	}
+
+	@Override
+	public void exitRepeatheader(CockroachParser.RepeatheaderContext ctx) {
+		if (ctx.ID() != null) {
+			LlvmGenerator.repeatStart(ctx.ID().getText());
+		} else {
+			error(ctx.getStart().getLine(), "Wrong value of repeat should be INT");
+		}
+	}
+
+	@Override
+	public void exitProgrambody(CockroachParser.ProgrambodyContext ctx) {
+		if (ctx.getParent() instanceof CockroachParser.RepeatstatementContext) {
+			LlvmGenerator.repeatEnd();
+		}
+	}
 }
