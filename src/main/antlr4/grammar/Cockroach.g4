@@ -3,7 +3,12 @@ grammar Cockroach;
 // Parser rules
 startRule : programbody* EOF;
 
-programbody: repeatstatement | statement;
+programbody: repeatstatement | ifstatement | statement;
+
+
+ifstatement : IF compare ':' ifbody END ';';
+
+ifbody : programbody*;
 
 repeatstatement : repeatheader programbody* END ';';
 
@@ -20,6 +25,12 @@ substract : variable SUBSTRACT variable;
 mul : variable MUL variable;
 divide : variable DIVIDE variable;
 
+compare : ID operator ID;
+
+operator : EQUALS | MORES | LESSS;
+
+
+
 print : PRINT ID;
 scan : SCAN ID;
 scand : SCAND ID;
@@ -31,6 +42,10 @@ variable : ID | INT | FLOAT | DOUBLE | LONG;
 repeatheader : REPEAT ID KROPKI;
 
 convertSymbol : ITOF | FTOI | ITOD | DTOI | ITOL | LTOI | DTOF | FTOD | DTOL | LTOD | FTOL | LTOF;
+
+EQUALS : '==';
+MORES : '>';
+LESSS : '<';
 
 ITOF : 'itof';
 FTOI : 'ftoi';
@@ -52,8 +67,9 @@ LTOF : 'ltof';
 
 REPEAT : 'repeat';
 
+
+IF : 'if';
 END : 'end';
-FREE : 'free';
 SCAN : 'scan';
 SCAND : 'scand';
 PRINT : 'print';

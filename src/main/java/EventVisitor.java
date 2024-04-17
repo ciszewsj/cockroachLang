@@ -234,10 +234,11 @@ public class EventVisitor extends CockroachBaseListener {
 
 	@Override
 	public void exitRepeatheader(CockroachParser.RepeatheaderContext ctx) {
-		if (ctx.ID() != null) {
+		String id = ctx.ID().getText();
+		if (variables.containsKey(id) && variables.get(id) == TYPE.INT) {
 			LlvmGenerator.repeatStart(ctx.ID().getText());
 		} else {
-			error(ctx.getStart().getLine(), "Wrong value of repeat should be INT");
+			error(ctx.getStart().getLine(), "Wrong value of repeat should be declared INT");
 		}
 	}
 
@@ -246,5 +247,58 @@ public class EventVisitor extends CockroachBaseListener {
 		if (ctx.getParent() instanceof CockroachParser.RepeatstatementContext) {
 			LlvmGenerator.repeatEnd();
 		}
+	}
+
+	@Override
+	public void enterIfbody(CockroachParser.IfbodyContext ctx) {
+		LlvmGenerator.ifStart();
+	}
+
+	@Override
+	public void exitIfbody(CockroachParser.IfbodyContext ctx) {
+		LlvmGenerator.ifEnd();
+	}
+
+	@Override
+	public void exitCompare(CockroachParser.CompareContext ctx) {
+		String id1 = ctx.ID().get(0).toString();
+		String id2 = ctx.ID().get(1).toString();
+		TYPE type1 = null;
+		TYPE type2 = null;
+
+		if (variables.containsKey(id1)) {
+			type1 = variables.get(id1);
+			LlvmGenerator.load(id1, variables.get(id1));
+		} else {
+			error(ctx.getStart().getLine(), "unknown variable " + id1);
+		}
+
+		if (variables.containsKey(id2)) {
+			type2 = variables.get(id2);
+			LlvmGenerator.load(id2, variables.get(id2));
+		} else {
+			error(ctx.getStart().getLine(), "unknown variable " + id2);
+		}
+
+		if (type1 != type2) {
+			error(ctx.getStart().getLine(), "types mismatch during convert");
+		}
+		if (ctx.operator().EQUALS() != null) {
+			LlvmGenerator.compare(Integer.toString(LlvmGenerator.reg - 2),
+					Integer.toString(LlvmGenerator.reg - 1),
+					type1,
+					EqualsType.EQUAL);
+		} else if (ctx.operator().MORES() != null) {
+			LlvmGenerator.compare(Integer.toString(LlvmGenerator.reg - 2),
+					Integer.toString(LlvmGenerator.reg - 1),
+					type1,
+					EqualsType.MORE);
+		} else if (ctx.operator().LESSS() != null) {
+			LlvmGenerator.compare(Integer.toString(LlvmGenerator.reg - 2),
+					Integer.toString(LlvmGenerator.reg - 1),
+					type1,
+					EqualsType.LESS);
+		}
+		super.exitCompare(ctx);
 	}
 }

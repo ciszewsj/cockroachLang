@@ -105,6 +105,70 @@ public class LlvmGenerator {
 		reg++;
 	}
 
+	static void ifStart() {
+		br++;
+		mainText += "br i1 %" + (reg - 1) + ", label %true" + br + ", label %false" + br + "\n";
+		mainText += "true" + br + ":\n";
+		brstack.push(br);
+	}
+
+	static void ifEnd() {
+		int b = brstack.pop();
+		mainText += "br label %false" + b + "\n";
+		mainText += "false" + b + ":\n";
+	}
+
+	static void compare(String id1, String id2, TYPE type, EqualsType equalsType) {
+		String operator = "";
+		String cmp = "";
+		switch (equalsType) {
+			case LESS:
+				switch (type) {
+					case FLOAT32:
+					case FLOAT64:
+						operator = "olt";
+						cmp = "fcmp";
+						break;
+					case LONG:
+					case INT:
+						operator = "slt";
+						cmp = "icmp";
+						break;
+				}
+				break;
+			case MORE:
+				switch (type) {
+					case FLOAT32:
+					case FLOAT64:
+						operator = "ole";
+						cmp = "fcmp";
+						break;
+					case LONG:
+					case INT:
+						operator = "sle";
+						cmp = "icmp";
+						break;
+				}
+				break;
+			case EQUAL:
+				switch (type) {
+					case FLOAT32:
+					case FLOAT64:
+						operator = "oeq";
+						cmp = "fcmp";
+						break;
+					case LONG:
+					case INT:
+						operator = "eq";
+						cmp = "icmp";
+						break;
+				}
+				break;
+		}
+
+		mainText += "%" + reg + " = " + cmp + " " + operator + " " + type.type + " %" + id1 + ", %" + id2 + "\n";
+		reg++;
+	}
 
 	static void declare(String id, TYPE type) {
 		mainText += "%" + id + " = alloca " + type.type + "\n";
