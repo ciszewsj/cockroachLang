@@ -1,6 +1,14 @@
 a = 1.2;
 b = 1.2;
 if a < b:
+	c = 12.0;
 	a = a+b;
+	print c;
+end;
+h=5;
+
+repeat h :
+ d= 10;
+ print d;
 end;
 print a;

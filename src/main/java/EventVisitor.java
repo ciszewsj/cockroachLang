@@ -243,7 +243,7 @@ public class EventVisitor extends CockroachBaseListener {
 	}
 
 	@Override
-	public void exitProgrambody(CockroachParser.ProgrambodyContext ctx) {
+	public void exitRepeatbody(CockroachParser.RepeatbodyContext ctx) {
 		if (ctx.getParent() instanceof CockroachParser.RepeatstatementContext) {
 			LlvmGenerator.repeatEnd();
 		}

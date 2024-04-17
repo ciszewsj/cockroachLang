@@ -10,7 +10,9 @@ ifstatement : IF compare ':' ifbody END ';';
 
 ifbody : programbody*;
 
-repeatstatement : repeatheader programbody* END ';';
+repeatstatement : repeatheader repeatbody END ';';
+
+repeatbody: programbody*;
 
 statement : expression  ';';
 
