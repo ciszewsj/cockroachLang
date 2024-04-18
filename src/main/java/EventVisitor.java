@@ -6,20 +6,29 @@ import java.util.Map;
 import java.util.Stack;
 
 public class EventVisitor extends CockroachBaseListener {
-	private final Map<String, TYPE> variables = new HashMap<>();
+	private final Map<String, TYPE> globalVariables = new HashMap<>();
+	private Map<String, TYPE> localVariables = new HashMap<>();
+	private final Map<String, TYPE> functions = new HashMap<>();
+
 	private final Stack<String> stack = new Stack<>();
 	private final Stack<TYPE> types = new Stack<>();
+
+	String function;
+
+	boolean global;
 
 	@Override
 	public void exitAssignment(CockroachParser.AssignmentContext ctx) {
 		TYPE type = types.pop();
 		if (ctx.ID() != null) {
 			String id = ctx.ID().getText();
-			if (!variables.containsKey(id)) {
-				variables.put(id, type);
-				LlvmGenerator.declare(id, type);
+			Variable variable = this.getVariable(id);
+			if (variable == null) {
+				putVariable(id, type, false);
+				LlvmGenerator.declare(id, type, global);
+				variable = new Variable(id, type, global, false);
 			}
-			LlvmGenerator.assign(id, stack.pop(), variables.get(id));
+			LlvmGenerator.assign(id, stack.pop(), variable.type, variable.global);
 		}
 	}
 
@@ -27,10 +36,11 @@ public class EventVisitor extends CockroachBaseListener {
 	public void exitVariable(CockroachParser.VariableContext ctx) {
 		if (ctx.ID() != null) {
 			String id = ctx.ID().getText();
-			if (variables.containsKey(id)) {
-				LlvmGenerator.load(id, variables.get(id));
+			Variable variable = getVariable(id);
+			if (variable != null) {
+				LlvmGenerator.load(id, variable.type, variable.global, variable.function);
 				stack.push("%" + (LlvmGenerator.reg - 1));
-				types.push(variables.get(id));
+				types.push(variable.type);
 			} else {
 				error(ctx.getStart().getLine(), "unknown variable " + id);
 			}
@@ -102,8 +112,10 @@ public class EventVisitor extends CockroachBaseListener {
 	@Override
 	public void exitPrint(CockroachParser.PrintContext ctx) {
 		String id = ctx.ID().getText();
-		if (variables.containsKey(id)) {
-			LlvmGenerator.printf(id, variables.get(id));
+		Variable variable = getVariable(id);
+		if (variable != null) {
+			LlvmGenerator.load(id, variable.type, variable.global, variable.function);
+			LlvmGenerator.printf(variable.type);
 		} else {
 			error(ctx.getStart().getLine(), "unknown variable " + id);
 		}
@@ -112,10 +124,11 @@ public class EventVisitor extends CockroachBaseListener {
 	@Override
 	public void exitScan(CockroachParser.ScanContext ctx) {
 		String id = ctx.ID().getText();
-		if (!variables.containsKey(id)) {
-			variables.put(id, TYPE.INT);
-			LlvmGenerator.declare(id, variables.get(id));
-		} else if (variables.get(id) != TYPE.INT) {
+		Variable variable = getVariable(id);
+		if (variable == null) {
+			putVariable(id, TYPE.INT, false);
+			LlvmGenerator.declare(id, globalVariables.get(id), global);
+		} else if (variable.type != TYPE.INT) {
 			error(ctx.getStart().getLine(), "Could not change type of " + id + " dynamically");
 		}
 		LlvmGenerator.scan(id);
@@ -128,9 +141,10 @@ public class EventVisitor extends CockroachBaseListener {
 		TYPE type2 = types.pop();
 		TYPE type3 = null;
 		String id = ctx.ID().getText();
-		if (variables.containsKey(id)) {
-			type3 = variables.get(id);
-			LlvmGenerator.load(id, variables.get(id));
+		Variable variable = getVariable(id);
+		if (variable != null) {
+			type3 = variable.type;
+			LlvmGenerator.load(id, variable.type, variable.global, variable.function);
 		} else {
 			error(ctx.getStart().getLine(), "unknown variable " + id);
 		}
@@ -218,10 +232,11 @@ public class EventVisitor extends CockroachBaseListener {
 	@Override
 	public void enterScand(CockroachParser.ScandContext ctx) {
 		String id = ctx.ID().getText();
-		if (!variables.containsKey(id)) {
-			variables.put(id, TYPE.FLOAT64);
-			LlvmGenerator.declare(id, variables.get(id));
-		} else if (variables.get(id) != TYPE.FLOAT64) {
+		Variable variable = getVariable(id);
+		if (variable == null) {
+			putVariable(id, TYPE.FLOAT64, false);
+			LlvmGenerator.declare(id, globalVariables.get(id), global);
+		} else if (variable.type != TYPE.FLOAT64) {
 			error(ctx.getStart().getLine(), "Could not change type of " + id + " dynamically");
 		}
 		LlvmGenerator.scanDouble(id);
@@ -235,8 +250,9 @@ public class EventVisitor extends CockroachBaseListener {
 	@Override
 	public void exitRepeatheader(CockroachParser.RepeatheaderContext ctx) {
 		String id = ctx.ID().getText();
-		if (variables.containsKey(id) && variables.get(id) == TYPE.INT) {
-			LlvmGenerator.repeatStart(ctx.ID().getText());
+		Variable variable = getVariable(id);
+		if (variable != null && variable.type == TYPE.INT) {
+			LlvmGenerator.repeatStart(ctx.ID().getText(), variable.global);
 		} else {
 			error(ctx.getStart().getLine(), "Wrong value of repeat should be declared INT");
 		}
@@ -247,6 +263,33 @@ public class EventVisitor extends CockroachBaseListener {
 		if (ctx.getParent() instanceof CockroachParser.RepeatstatementContext) {
 			LlvmGenerator.repeatEnd();
 		}
+	}
+
+	@Override
+	public void enterFunction(CockroachParser.FunctionContext ctx) {
+		String id = ctx.ID().getText();
+		Variable variable = getVariable(id);
+		if (variable != null) {
+			error(ctx.getStart().getLine(), "Variable is already init");
+		}
+		function = id;
+		LlvmGenerator.functionStart(id);
+		global = false;
+	}
+
+	@Override
+	public void exitFunction(CockroachParser.FunctionContext ctx) {
+
+		if (!localVariables.containsKey(function)) {
+			LlvmGenerator.assign(function, "0", TYPE.INT, false);
+		}
+		LlvmGenerator.load(function, TYPE.INT, false, false);
+		LlvmGenerator.functionEnd();
+
+		putVariable(function, TYPE.INT, true);
+
+		localVariables = new HashMap<>();
+		global = true;
 	}
 
 	@Override
@@ -266,16 +309,17 @@ public class EventVisitor extends CockroachBaseListener {
 		TYPE type1 = null;
 		TYPE type2 = null;
 
-		if (variables.containsKey(id1)) {
-			type1 = variables.get(id1);
-			LlvmGenerator.load(id1, variables.get(id1));
+		Variable variable1 = getVariable(id1);
+		if (variable1 != null) {
+			type1 = variable1.type;
+			LlvmGenerator.load(id1, type1, variable1.global, variable1.function);
 		} else {
 			error(ctx.getStart().getLine(), "unknown variable " + id1);
 		}
-
-		if (variables.containsKey(id2)) {
-			type2 = variables.get(id2);
-			LlvmGenerator.load(id2, variables.get(id2));
+		Variable variable2 = getVariable(id2);
+		if (variable2 != null) {
+			type2 = variable2.type;
+			LlvmGenerator.load(id2, type2, variable2.global, variable2.function);
 		} else {
 			error(ctx.getStart().getLine(), "unknown variable " + id2);
 		}
@@ -299,6 +343,58 @@ public class EventVisitor extends CockroachBaseListener {
 					type1,
 					EqualsType.LESS);
 		}
-		super.exitCompare(ctx);
+	}
+
+	@Override
+	public void enterStartRule(CockroachParser.StartRuleContext ctx) {
+		global = true;
+	}
+
+	@Override
+	public void exitStartRule(CockroachParser.StartRuleContext ctx) {
+		LlvmGenerator.closeMain();
+	}
+
+	private Variable getVariable(String id) {
+		if (localVariables.containsKey(id)) {
+			System.out.println("local << " + id);
+			return new Variable(id, localVariables.get(id), false, false);
+		} else if (globalVariables.containsKey(id)) {
+			System.out.println("global << " + id);
+			return new Variable(id, globalVariables.get(id), true, false);
+		} else if (functions.containsKey(id)) {
+			System.out.println("funckja << " + id);
+			return new Variable(id, functions.get(id), true, true);
+		}
+		System.out.println("brak << " + id);
+
+		return null;
+	}
+
+	private void putVariable(String id, TYPE type, boolean function) {
+		if (function) {
+			System.out.println("Funkcja >> " + id);
+			functions.put(id, type);
+		} else if (global) {
+			System.out.println("global >> " + id);
+			globalVariables.put(id, type);
+		} else {
+			System.out.println("local >> " + id);
+			localVariables.put(id, type);
+		}
+	}
+
+	static class Variable {
+		public String id;
+		public TYPE type;
+		public boolean global;
+		public boolean function;
+
+		public Variable(String id, TYPE type, boolean global, boolean function) {
+			this.id = id;
+			this.type = type;
+			this.global = global;
+			this.function = function;
+		}
 	}
 }

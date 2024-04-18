@@ -1,9 +1,16 @@
 grammar Cockroach;
 
 // Parser rules
-startRule : programbody* EOF;
+startRule : (programbody|function)* EOF;
 
 programbody: repeatstatement | ifstatement | statement;
+
+
+function : function_type ID ':' fblock END ';';
+
+function_type : FUNTION_INT | FUNTION_DOUBLE;
+
+fblock: programbody*;
 
 
 ifstatement : IF compare ':' ifbody END ';';
@@ -69,6 +76,8 @@ LTOF : 'ltof';
 
 REPEAT : 'repeat';
 
+FUNTION_INT :'func_i';
+FUNTION_DOUBLE :'func_d';
 
 IF : 'if';
 END : 'end';
