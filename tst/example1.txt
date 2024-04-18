@@ -2,3 +2,7 @@ struct sdoo:
     int
     double
 end;
+
+a = sdoo ( 10 20.0 );
+
+b = a.0;

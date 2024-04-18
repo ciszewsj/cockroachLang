@@ -1,6 +1,7 @@
 import grammar.CockroachBaseListener;
 import grammar.CockroachParser;
 
+import java.lang.reflect.Type;
 import java.util.*;
 
 public class EventVisitor extends CockroachBaseListener {
@@ -8,6 +9,7 @@ public class EventVisitor extends CockroachBaseListener {
 	private Map<String, TYPE> localVariables = new HashMap<>();
 	private final Map<String, TYPE> functions = new HashMap<>();
 	private final Map<String, List<TYPE>> structs = new HashMap<>();
+	private final Map<String, Struct> defs = new HashMap<>();
 
 	private final List<String> functionVariables = new ArrayList<>();
 
@@ -389,9 +391,13 @@ public class EventVisitor extends CockroachBaseListener {
 		LlvmGenerator.closeMain();
 	}
 
+
 	@Override
 	public void exitStructura(CockroachParser.StructuraContext ctx) {
-		String id = ctx.ID().getText();
+		String id = ctx.ID().getText() + "_struct";
+		if (getVariable(id) != null && structs.containsKey(id)) {
+			error(ctx.getStart().getLine(), "Could not use this symbol to define struct");
+		}
 		List<TYPE> types = new ArrayList<>();
 		for (CockroachParser.StructbodyContext bodyctx : ctx.structbody()) {
 			if (bodyctx.INT_TYPE() != null) {
@@ -405,6 +411,92 @@ public class EventVisitor extends CockroachBaseListener {
 			}
 		}
 		LlvmGenerator.declareStruct(id, types);
+		structs.put(id, types);
+	}
+
+	@Override
+	public void exitStrukturasetter(CockroachParser.StrukturasetterContext ctx) {
+		String id = ctx.ID().get(0).getText() + "_def";
+		String structId = ctx.ID().get(1).getText() + "_struct";
+		List<TYPE> typesList = structs.get(structId);
+		if (!structs.containsKey(structId)) {
+			error(ctx.getStart().getLine(), "Struct not exists");
+		}
+		if (defs.containsKey(id)) {
+			error(ctx.getStart().getLine(), "Struct already define");
+		}
+		if (typesList.size() != ctx.variable().size()) {
+			error(ctx.getStart().getLine(), "Mismatch exception wrong number of args");
+		}
+		Map<String, TYPE> news = new LinkedHashMap<>();
+		int i = 0;
+		for (CockroachParser.VariableContext variableContext : ctx.variable()) {
+			if (variableContext.ID() != null) {
+				String id2 = variableContext.ID().getText();
+				Variable variable = getVariable(id2);
+				if (variable != null) {
+					if (variable.type != typesList.get(i)) {
+						error(ctx.getStart().getLine(), "Type mismatch");
+
+					}
+					LlvmGenerator.load(variable.id, variable.type, variable.global, variable.function);
+					String l = String.valueOf(LlvmGenerator.reg - 1);
+					news.put("%" + l, variable.type);
+				} else {
+					error(ctx.getStart().getLine(), "Nie ma zmiennej takiej");
+				}
+
+			} else if (variableContext.INT() != null) {
+				if (TYPE.INT != typesList.get(i)) {
+					error(ctx.getStart().getLine(), "Type mismatch");
+				}
+				news.put(variableContext.INT().getText(), TYPE.INT);
+
+			} else if (variableContext.LONG() != null) {
+				if (TYPE.LONG != typesList.get(i)) {
+					error(ctx.getStart().getLine(), "Type mismatch");
+				}
+				news.put(variableContext.LONG().getText().replace("l", ""), TYPE.LONG);
+			} else if (variableContext.FLOAT() != null) {
+				if (TYPE.FLOAT32 != typesList.get(i)) {
+					error(ctx.getStart().getLine(), "Type mismatch");
+				}
+				news.put(variableContext.FLOAT().getText().replace("f", ""), TYPE.FLOAT32);
+			} else if (variableContext.DOUBLE() != null) {
+				if (TYPE.FLOAT64 != typesList.get(i)) {
+					error(ctx.getStart().getLine(), "Type mismatch");
+				}
+				news.put(variableContext.DOUBLE().getText(), TYPE.FLOAT64);
+			}
+			i++;
+		}
+		LlvmGenerator.defineStruct(id, structId, news);
+		defs.put(id, new Struct(structId, structs.get(structId)));
+	}
+
+	@Override
+	public void exitStrukturagetterproperty(CockroachParser.StrukturagetterpropertyContext ctx) {
+		super.exitStrukturagetterproperty(ctx);
+	}
+
+	@Override
+	public void exitStructbody(CockroachParser.StructbodyContext ctx) {
+		super.exitStructbody(ctx);
+	}
+
+	@Override
+	public void exitStrukturagetter(CockroachParser.StrukturagetterContext ctx) {
+		String id = ctx.ID().getText() + "_def";
+		String field = ctx.INT().getText();
+		if (defs.containsKey(id)) {
+			if (defs.get(id).types.size() > Integer.parseInt(field)) {
+				LlvmGenerator.loadStructField(id, defs.get(id).struct, Integer.parseInt(field));
+			} else {
+				error(ctx.getStart().getLine(), "Structure have not field " + field + "<>" + defs.get(id).types.size());
+			}
+		} else {
+			error(ctx.getStart().getLine(), "Structure not exists " + id);
+		}
 	}
 
 	private Variable getVariable(String id) {
@@ -453,6 +545,16 @@ public class EventVisitor extends CockroachBaseListener {
 			this.type = type;
 			this.global = global;
 			this.function = function;
+		}
+	}
+
+	static class Struct {
+		public String struct;
+		public List<TYPE> types;
+
+		public Struct(String struct, List<TYPE> types) {
+			this.struct = struct;
+			this.types = types;
 		}
 	}
 }

@@ -1,4 +1,5 @@
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 public class LlvmGenerator {
@@ -11,6 +12,13 @@ public class LlvmGenerator {
 	static int br = 0;
 
 	static Stack<Integer> brstack = new Stack<>();
+
+
+	static void loadStructField(String id, String structName, int position) {
+		buffer += "%" + reg + " = getelementptr %" + structName + ", %" + structName + "* %" + id + ", i32 0, i32 " + position + "\n";
+		reg++;
+	}
+
 
 	static void printf(TYPE type) {
 		if (type == TYPE.FLOAT32) {
@@ -214,11 +222,6 @@ public class LlvmGenerator {
 		reg = mainReg;
 	}
 
-	static void callFunction(String id) {
-		buffer += "%" + reg + " = call i32 @" + id + "()\n";
-		reg++;
-	}
-
 	static void add(String val1, String val2, TYPE type) {
 		if (type == TYPE.FLOAT32 || type == TYPE.FLOAT64) {
 			buffer += "%" + reg + " = fadd " + type.type + " " + val1 + ", " + val2 + "\n ";
@@ -268,6 +271,16 @@ public class LlvmGenerator {
 		structDeclarations += "}\n";
 	}
 
+	static void defineStruct(String id, String structId, Map<String, TYPE> vars) {
+		buffer += "%" + id + " = alloca %" + structId + "\n";
+		int i = 0;
+		for (String key : vars.keySet()) {
+			buffer += "%" + reg + " = getelementptr %" + structId + ", %" + structId + "* %" + id + ", i32 0, i32 " + i + "\n";
+			buffer += "store " + vars.get(key).type + " " + key + ", " + vars.get(key).type + "* %" + reg + "\n";
+			reg++;
+			i++;
+		}
+	}
 
 	static void closeMain() {
 		mainText += buffer;

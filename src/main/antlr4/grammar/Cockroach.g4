@@ -1,14 +1,14 @@
 grammar Cockroach;
 
 // Parser rules
-startRule : (programbody|function|structura|setstrukturasetterproperty|strukturagetter)* EOF;
+startRule : (programbody|function|structura|strukturagetterproperty|strukturasetter)* EOF;
 
 programbody: repeatstatement | ifstatement | statement;
 
 
 structura : STRUCT ID ':' structbody+ END ';' ;
 
-setstrukturasetterproperty : strukturagetter '=' variable ';';
+strukturasetter: ID '=' ID '(' variable+ ')' ';';
 
 strukturagetterproperty : ID '=' strukturagetter ';';
 
