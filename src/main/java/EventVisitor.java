@@ -31,6 +31,9 @@ public class EventVisitor extends CockroachBaseListener {
 				LlvmGenerator.declare(id, type, global);
 				variable = new Variable(id, type, global, false);
 			}
+			if (type!= variable.type){
+				error(ctx.getStart().getLine(), "Types mismatch");
+			}
 			LlvmGenerator.assign(id, stack.pop(), variable.type, variable.global);
 		}
 	}
@@ -520,17 +523,12 @@ public class EventVisitor extends CockroachBaseListener {
 
 	private Variable getVariable(String id) {
 		if (localVariables.containsKey(id)) {
-			System.out.println("local << " + id);
 			return new Variable(id, localVariables.get(id), false, false);
 		} else if (globalVariables.containsKey(id)) {
-			System.out.println("global << " + id);
 			return new Variable(id, globalVariables.get(id), true, false);
 		} else if (functions.containsKey(id)) {
-			System.out.println("funckja << " + id);
 			return new Variable(id, functions.get(id), true, true);
 		}
-		System.out.println("brak << " + id);
-
 		return null;
 	}
 
@@ -541,13 +539,10 @@ public class EventVisitor extends CockroachBaseListener {
 
 		}
 		if (function) {
-			System.out.println("Funkcja >> " + id);
 			functions.put(id, type);
 		} else if (global) {
-			System.out.println("global >> " + id);
 			globalVariables.put(id, type);
 		} else {
-			System.out.println("local >> " + id);
 			functionVariables.add(id);
 			localVariables.put(id, type);
 		}

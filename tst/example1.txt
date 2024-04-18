@@ -1,12 +1,8 @@
-struct sdoo:
-    int
-    double
+b=5;
+c = 0;
+repeat b:
+    local a = 10;
+    c = c + a;
+	print a;
 end;
-
-a = sdoo ( 10 20.0 );
-
-b = a.0;
-c = a.1;
-
-print b;
 print c;
