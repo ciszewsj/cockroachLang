@@ -476,12 +476,31 @@ public class EventVisitor extends CockroachBaseListener {
 
 	@Override
 	public void exitStrukturagetterproperty(CockroachParser.StrukturagetterpropertyContext ctx) {
-		super.exitStrukturagetterproperty(ctx);
-	}
+		String def = ctx.strukturagetter().ID() + "_def";
+		String field = ctx.strukturagetter().INT().getText();
+		if (!defs.containsKey(def)) {
+			error(ctx.getStart().getLine(), "Struct not define");
+		} else if (defs.get(def).types.size() < Integer.parseInt(field)) {
+			error(ctx.getStart().getLine(), "FIELD NOT EXISTS");
+		}
+		TYPE type = defs.get(def).types.get(Integer.parseInt(field));
+		if (ctx.ID() != null) {
+			String id = ctx.ID().getText();
+			Variable variable = this.getVariable(id);
+			if (variable == null) {
+				putVariable(id, type, false);
+				LlvmGenerator.declare(id, type, global);
+				variable = new Variable(id, type, global, false);
+			} else {
+				if (variable.type != type) {
+					error(ctx.getStart().getLine(), "TYPE MISMATCH in struct get");
+				}
+			}
+			LlvmGenerator.getPropertyFromStruct(id, def, field, defs.get(def).struct, type, variable.global);
+		} else {
+			error(ctx.getStart().getLine(), "GLUPOTa");
+		}
 
-	@Override
-	public void exitStructbody(CockroachParser.StructbodyContext ctx) {
-		super.exitStructbody(ctx);
 	}
 
 	@Override

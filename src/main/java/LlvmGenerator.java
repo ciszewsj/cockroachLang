@@ -282,6 +282,18 @@ public class LlvmGenerator {
 		}
 	}
 
+	static void getPropertyFromStruct(String id, String structId, String fieldId, String struct, TYPE type, boolean global) {
+		buffer += "%" + reg + " = getelementptr %" + struct + ", %" + struct + "* %" + structId + ", i32 0, i32 " + fieldId + "\n";
+		reg++;
+		buffer += "%" + reg + " = load " + type.type + ", " + type.type + "* %" + (reg - 1) + "\n";
+		if (global) {
+			buffer += "store " + type.type + " %" + reg + ", " + type.type + "* @" + id + "\n";
+		} else {
+			buffer += "store " + type.type + " %" + reg + ", " + type.type + "* %" + id + "\n";
+		}
+		reg++;
+	}
+
 	static void closeMain() {
 		mainText += buffer;
 	}
