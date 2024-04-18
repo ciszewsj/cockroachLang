@@ -1,8 +1,10 @@
+import java.util.List;
 import java.util.Stack;
 
 public class LlvmGenerator {
 	private static String headerText = "";
 	private static String mainText = "";
+	private static String structDeclarations = "";
 	private static String buffer = "";
 	static int reg = 1;
 	static int mainReg = 1;
@@ -253,6 +255,20 @@ public class LlvmGenerator {
 		reg++;
 	}
 
+	static void declareStruct(String id, List<TYPE> types) {
+		structDeclarations += "%" + id + "= type{";
+		boolean first = true;
+		for (TYPE type : types) {
+			if (!first) {
+				structDeclarations += ", ";
+			}
+			structDeclarations += type.type;
+			first = false;
+		}
+		structDeclarations += "}\n";
+	}
+
+
 	static void closeMain() {
 		mainText += buffer;
 	}
@@ -266,6 +282,7 @@ public class LlvmGenerator {
 		text += "@strf = constant [4 x i8] c\"%f\\0A\\00\"\n";
 		text += "@strd = constant [4 x i8] c\"%lf\\00\"\n";
 		text += "@strl = constant [6 x i8] c\"%lld\\0A\\00\"\n";
+		text += structDeclarations;
 		text += headerText;
 		text += "define i32 @main() nounwind{\n";
 		text += mainText;

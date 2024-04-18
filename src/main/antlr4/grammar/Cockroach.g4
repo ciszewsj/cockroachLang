@@ -1,10 +1,18 @@
 grammar Cockroach;
 
 // Parser rules
-startRule : (programbody|function)* EOF;
+startRule : (programbody|function|structura|setstrukturasetterproperty|strukturagetter)* EOF;
 
 programbody: repeatstatement | ifstatement | statement;
 
+
+structura : STRUCT ID ':' structbody+ END ';' ;
+
+setstrukturasetterproperty : strukturagetter '=' variable ';';
+
+strukturagetterproperty : ID '=' strukturagetter ';';
+
+structbody : INT_TYPE | LONG_TYPE | FLOAT_TYPE | DOUBLE_TYPE;
 
 function : function_type ID ':' fblock END ';';
 
@@ -49,10 +57,16 @@ convert : convertSymbol ID;
 
 variable : ID | INT | FLOAT | DOUBLE | LONG;
 
+strukturagetter : ID '.' INT;
 
 repeatheader : REPEAT ID KROPKI;
 
 convertSymbol : ITOF | FTOI | ITOD | DTOI | ITOL | LTOI | DTOF | FTOD | DTOL | LTOD | FTOL | LTOF;
+
+INT_TYPE: 'int';
+DOUBLE_TYPE : 'double';
+FLOAT_TYPE : 'float';
+LONG_TYPE : 'long';
 
 EQUALS : '==';
 MORES : '>';

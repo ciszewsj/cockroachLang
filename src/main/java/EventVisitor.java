@@ -7,6 +7,7 @@ public class EventVisitor extends CockroachBaseListener {
 	private final Map<String, TYPE> globalVariables = new HashMap<>();
 	private Map<String, TYPE> localVariables = new HashMap<>();
 	private final Map<String, TYPE> functions = new HashMap<>();
+	private final Map<String, List<TYPE>> structs = new HashMap<>();
 
 	private final List<String> functionVariables = new ArrayList<>();
 
@@ -386,6 +387,24 @@ public class EventVisitor extends CockroachBaseListener {
 	@Override
 	public void exitStartRule(CockroachParser.StartRuleContext ctx) {
 		LlvmGenerator.closeMain();
+	}
+
+	@Override
+	public void exitStructura(CockroachParser.StructuraContext ctx) {
+		String id = ctx.ID().getText();
+		List<TYPE> types = new ArrayList<>();
+		for (CockroachParser.StructbodyContext bodyctx : ctx.structbody()) {
+			if (bodyctx.INT_TYPE() != null) {
+				types.add(TYPE.INT);
+			} else if (bodyctx.LONG_TYPE() != null) {
+				types.add(TYPE.LONG);
+			} else if (bodyctx.DOUBLE_TYPE() != null) {
+				types.add(TYPE.FLOAT64);
+			} else if (bodyctx.FLOAT_TYPE() != null) {
+				types.add(TYPE.FLOAT32);
+			}
+		}
+		LlvmGenerator.declareStruct(id, types);
 	}
 
 	private Variable getVariable(String id) {

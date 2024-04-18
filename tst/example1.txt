@@ -1,6 +1,4 @@
-
-b = 3;
-c = 5;
-if b > c:
-	print c;
+struct sdoo:
+    int
+    double
 end;
