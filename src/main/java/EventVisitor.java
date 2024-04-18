@@ -285,26 +285,41 @@ public class EventVisitor extends CockroachBaseListener {
 
 	@Override
 	public void enterFunction(CockroachParser.FunctionContext ctx) {
+		TYPE type = null;
+		if (ctx.function_type().FUNTION_INT() != null) {
+			type = TYPE.INT;
+		} else if (ctx.function_type().FUNTION_DOUBLE() != null) {
+			type = TYPE.FLOAT64;
+		} else {
+			error(ctx.getStart().getLine(), "Wrong type");
+		}
 		String id = ctx.ID().getText();
 		Variable variable = getVariable(id);
 		if (variable != null) {
 			error(ctx.getStart().getLine(), "Variable is already init");
 		}
 		function = id;
-		LlvmGenerator.functionStart(id);
+		LlvmGenerator.functionStart(id, Objects.requireNonNull(type));
 		global = false;
+		LlvmGenerator.declare(id, type, global);
+		putVariable(id, type, false);
 	}
 
 	@Override
 	public void exitFunction(CockroachParser.FunctionContext ctx) {
-
-		if (!localVariables.containsKey(function)) {
-			LlvmGenerator.assign(function, "0", TYPE.INT, false);
+		TYPE type = null;
+		if (ctx.function_type().FUNTION_INT() != null) {
+			type = TYPE.INT;
+		} else if (ctx.function_type().FUNTION_DOUBLE() != null) {
+			type = TYPE.FLOAT64;
+		} else {
+			error(ctx.getStart().getLine(), "Wrong type");
 		}
-		LlvmGenerator.load(function, TYPE.INT, false, false);
-		LlvmGenerator.functionEnd();
 
-		putVariable(function, TYPE.INT, true);
+		LlvmGenerator.load(function, type, false, false);
+		LlvmGenerator.functionEnd(Objects.requireNonNull(type));
+
+		putVariable(function, type, true);
 
 		localVariables = new HashMap<>();
 		global = true;

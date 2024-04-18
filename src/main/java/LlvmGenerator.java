@@ -165,8 +165,14 @@ public class LlvmGenerator {
 	}
 
 	static void declare(String id, TYPE type, boolean global) {
+		String value = "";
+		if (type == TYPE.INT || type == TYPE.LONG) {
+			value = "0";
+		} else {
+			value = "0.0";
+		}
 		if (global) {
-			headerText += "@" + id + " = global " + type.type + " 0\n";
+			headerText += "@" + id + " = global " + type.type + " " + value + "\n";
 		} else {
 			buffer += "%" + id + " = alloca " + type.type + "\n";
 		}
@@ -182,7 +188,7 @@ public class LlvmGenerator {
 
 	static void load(String id, TYPE type, boolean global, boolean function) {
 		if (function) {
-			buffer += "%" + reg + " = call i32 @" + id + "()\n";
+			buffer += "%" + reg + " = call " + type.type + " @" + id + "()\n";
 		} else if (global) {
 			buffer += "%" + reg + " = load " + type.type + ", " + type.type + "* @" + id + "\n";
 		} else {
@@ -191,15 +197,15 @@ public class LlvmGenerator {
 		reg++;
 	}
 
-	static void functionStart(String id) {
+	static void functionStart(String id, TYPE type) {
 		mainText += buffer;
 		mainReg = reg;
-		buffer = "define i32 @" + id + "() nounwind {\n";
+		buffer = "define " + type.type + " @" + id + "() nounwind {\n";
 		reg = 1;
 	}
 
-	static void functionEnd() {
-		buffer += "ret i32 %" + (reg - 1) + "\n";
+	static void functionEnd(TYPE type) {
+		buffer += "ret " + type.type + " %" + (reg - 1) + "\n";
 		buffer += "}\n";
 		headerText += buffer;
 		buffer = "";

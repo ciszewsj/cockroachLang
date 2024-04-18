@@ -1,7 +1,7 @@
 func_i an:
-	b = 10 + 2;
+	b = 10.0;
 	print b;
-	an = b;
+	an = dtoi b;
 end;
 local b = 1.0f;
 a = an;
