@@ -27,17 +27,17 @@ public class LlvmGenerator {
 	}
 
 	static void repeatStart(String id, boolean global) {
-		declare(Integer.toString(reg), TYPE.INT, global);
+		declare(Integer.toString(reg), TYPE.INT, false);
 		int counter = reg;
 		reg++;
-		assign(Integer.toString(counter), "0", TYPE.INT, global);
+		assign(Integer.toString(counter), "0", TYPE.INT, false);
 		br++;
 		buffer += "br label %cond" + br + "\n";
 		buffer += "cond" + br + ":\n";
 
-		load(Integer.toString(counter), TYPE.INT, global, false);
+		load(Integer.toString(counter), TYPE.INT, false, false);
 		add("%" + (reg - 1), "1", TYPE.INT);
-		assign(Integer.toString(counter), "%" + (reg - 1), TYPE.INT, global);
+		assign(Integer.toString(counter), "%" + (reg - 1), TYPE.INT, false);
 
 		load(id, TYPE.INT, global, false);
 		buffer += "%" + reg + " = icmp sle i32 %" + (reg - 2) + ", %" + (reg - 1) + "\n";

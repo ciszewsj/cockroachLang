@@ -1,9 +1,9 @@
-func_i an:
-	b = 10.0;
-	print b;
-	an = dtoi b;
+
+b=5;
+c = 0;
+repeat b:
+    local a = 10;
+    c = c + a;
+	print a;
 end;
-local b = 1.0f;
-a = an;
-print a;
-print b;
+print c;
