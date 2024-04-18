@@ -1,14 +1,14 @@
 import grammar.CockroachBaseListener;
 import grammar.CockroachParser;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 public class EventVisitor extends CockroachBaseListener {
 	private final Map<String, TYPE> globalVariables = new HashMap<>();
 	private Map<String, TYPE> localVariables = new HashMap<>();
 	private final Map<String, TYPE> functions = new HashMap<>();
+
+	private final List<String> functionVariables = new ArrayList<>();
 
 	private final Stack<String> stack = new Stack<>();
 	private final Stack<TYPE> types = new Stack<>();
@@ -27,6 +27,24 @@ public class EventVisitor extends CockroachBaseListener {
 				putVariable(id, type, false);
 				LlvmGenerator.declare(id, type, global);
 				variable = new Variable(id, type, global, false);
+			}
+			LlvmGenerator.assign(id, stack.pop(), variable.type, variable.global);
+		}
+	}
+
+	@Override
+	public void exitLocalassigment(CockroachParser.LocalassigmentContext ctx) {
+		TYPE type = types.pop();
+		if (ctx.ID() != null) {
+			String id = ctx.ID().getText();
+			Variable variable = this.getVariable(id);
+			if (variable == null) {
+				boolean isGlobal = global;
+				global = false;
+				putVariable(id, type, false);
+				LlvmGenerator.declare(id, type, false);
+				variable = new Variable(id, type, false, false);
+				global = isGlobal;
 			}
 			LlvmGenerator.assign(id, stack.pop(), variable.type, variable.global);
 		}
@@ -372,6 +390,11 @@ public class EventVisitor extends CockroachBaseListener {
 	}
 
 	private void putVariable(String id, TYPE type, boolean function) {
+
+		if (global && functionVariables.contains(id)) {
+			error(-1, "Could not declare global variable when local is declared already " + id);
+
+		}
 		if (function) {
 			System.out.println("Funkcja >> " + id);
 			functions.put(id, type);
@@ -380,6 +403,7 @@ public class EventVisitor extends CockroachBaseListener {
 			globalVariables.put(id, type);
 		} else {
 			System.out.println("local >> " + id);
+			functionVariables.add(id);
 			localVariables.put(id, type);
 		}
 	}

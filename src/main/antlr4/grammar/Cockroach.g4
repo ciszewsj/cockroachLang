@@ -23,9 +23,11 @@ repeatbody: programbody*;
 
 statement : expression  ';';
 
-expression : assignment | print | scan | scand | convert;
+expression : assignment | localassigment | print | scan | scand | convert;
 
 assignment : ID '=' value;
+
+localassigment : LOCAL ID '=' value;
 
 value : add | substract | mul | divide | variable | convert;
 
@@ -79,6 +81,7 @@ REPEAT : 'repeat';
 FUNTION_INT :'func_i';
 FUNTION_DOUBLE :'func_d';
 
+LOCAL : 'local';
 IF : 'if';
 END : 'end';
 SCAN : 'scan';

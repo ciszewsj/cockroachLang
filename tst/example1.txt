@@ -3,5 +3,7 @@ func_i an:
 	print b;
 	an = b;
 end;
+local b = 1.0f;
 a = an;
 print a;
+print b;
