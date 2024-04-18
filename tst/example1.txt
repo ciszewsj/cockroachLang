@@ -1,9 +1,6 @@
 
-b=5;
-c = 0;
-repeat b:
-    local a = 10;
-    c = c + a;
-	print a;
+b = 3;
+c = 5;
+if b > c:
+	print c;
 end;
-print c;

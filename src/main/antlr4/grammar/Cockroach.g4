@@ -58,6 +58,8 @@ EQUALS : '==';
 MORES : '>';
 LESSS : '<';
 
+STRUCT : 'struct';
+
 ITOF : 'itof';
 FTOI : 'ftoi';
 

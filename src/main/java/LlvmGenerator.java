@@ -134,12 +134,12 @@ public class LlvmGenerator {
 				switch (type) {
 					case FLOAT32:
 					case FLOAT64:
-						operator = "ole";
+						operator = "ogt";
 						cmp = "fcmp";
 						break;
 					case LONG:
 					case INT:
-						operator = "sle";
+						operator = "sgt";
 						cmp = "icmp";
 						break;
 				}
