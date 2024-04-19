@@ -7,6 +7,7 @@ import java.util.*;
 public class EventVisitor extends CockroachBaseListener {
 	private final Map<String, TYPE> globalVariables = new HashMap<>();
 	private Map<String, TYPE> localVariables = new HashMap<>();
+	private Map<String, TYPE> tmpLocalVariables = new HashMap<>();
 	private final Map<String, TYPE> functions = new HashMap<>();
 	private final Map<String, List<TYPE>> structs = new HashMap<>();
 	private final Map<String, Struct> defs = new HashMap<>();
@@ -31,7 +32,7 @@ public class EventVisitor extends CockroachBaseListener {
 				LlvmGenerator.declare(id, type, global);
 				variable = new Variable(id, type, global, false);
 			}
-			if (type!= variable.type){
+			if (type != variable.type) {
 				error(ctx.getStart().getLine(), "Types mismatch");
 			}
 			LlvmGenerator.assign(id, stack.pop(), variable.type, variable.global);
@@ -44,7 +45,7 @@ public class EventVisitor extends CockroachBaseListener {
 		if (ctx.ID() != null) {
 			String id = ctx.ID().getText();
 			Variable variable = this.getVariable(id);
-			if (variable == null) {
+			if (variable == null || variable.global) {
 				boolean isGlobal = global;
 				global = false;
 				putVariable(id, type, false);
@@ -308,6 +309,8 @@ public class EventVisitor extends CockroachBaseListener {
 		LlvmGenerator.functionStart(id, Objects.requireNonNull(type));
 		global = false;
 		LlvmGenerator.declare(id, type, global);
+		tmpLocalVariables = localVariables;
+		localVariables = new HashMap<>();
 		putVariable(id, type, false);
 	}
 
@@ -327,7 +330,7 @@ public class EventVisitor extends CockroachBaseListener {
 
 		putVariable(function, type, true);
 
-		localVariables = new HashMap<>();
+		localVariables = tmpLocalVariables;
 		global = true;
 	}
 

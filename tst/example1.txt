@@ -1,8 +1,10 @@
-b=5;
-c = 0;
-repeat b:
-    local a = 10;
-    c = c + a;
-	print a;
+a =11.0;
+func_d an:
+	local a = 10;
+	a = a * a;
+	local b = itod a;
+	an = b;
 end;
-print c;
+local b = an;
+print a;
+print b;
